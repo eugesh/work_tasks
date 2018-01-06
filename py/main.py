@@ -2,14 +2,85 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 
+
 image_path = '/home/shel/workspace/work_tasks/plates_recog/data/opencv_test2.bmp'
 # image_path = '/home/shel/workspace/work_tasks/plates_recog/data/opencv_test3.bmp'
 
-def center_by_diagonals_intersection(contour):
 
-def center_by_average(contour):
+def center_by_diagonals_intersection(cnt):
+    x1 = cnt[0][0][0]
+    y1 = cnt[0][0][1]
+    x3 = cnt[1][0][0]
+    y3 = cnt[1][0][1]
+    x2 = cnt[2][0][0]
+    y2 = cnt[2][0][1]
+    x4 = cnt[3][0][0]
+    y4 = cnt[3][0][1]
+    Cx = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / \
+         ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4))
+    Cy = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / \
+         ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4))
+
+    return (Cx, Cy)
+
+
+def center_by_average(cnt):
+    Cx, Cy = np.average(cnt[0, :]), np.average(cnt[1, :])
+    return (Cx, Cy)
+
 
 def center_by_moments(contour):
+    M = cv2.moments(contour)
+    Cx = int(M['m10'] / M['m00'])
+    Cy = int(M['m01'] / M['m00'])
+    return (Cx, Cy)
+
+
+def euclid_dist(vec):
+    return np.sqrt(np.sum(np.square(vec)))
+
+
+def distance_between_contours(cntA, cntB):
+    # Check for intersections.
+
+    # Find distance.
+    min_dist = euclid_dist(cntA[0], cntB[0])
+    for point in cntA:
+        dist = cv2.pointPolygonTest(cnt, (50,50), True)
+
+
+def find_rectangles(contours):
+    # Find objects with 4 points.
+    four_angles_contours = []
+    for i in range(len(approx)):
+        cnt = approx[i]
+        if len(cnt) == 4:
+            four_angles_contours.append(cnt)
+
+    # Find objects with right angles.
+    # Let's try ret = cv2.matchShapes(cnt1,cnt2,1,0.0)
+    cos_eps = 0.3
+    # Loop over contours.
+    rect_contours = []
+    # for i in range(len(four_angles_contours)):
+    for cnt in four_angles_contours:
+        # Loop over points.
+        sum_of_cos = 0
+        for j in range(4):
+            vec1 = cnt[j - 1] - cnt[j]
+            vec2 = cnt[j] - cnt[(j + 1) % 4]
+            norm1 = np.sqrt(np.sum(np.square(vec1)))
+            norm2 = np.sqrt(np.sum(np.square(vec2)))
+            print("norm1, norm2: ", norm1, norm2)
+            print("vec1, vec2: ", vec1, vec2)
+            print("np.dot(vec1, vec2): ", np.dot(vec1, vec2.transpose()))
+            dot_cos = np.dot(vec1, vec2.transpose()) / (norm1 * norm2)
+            sum_of_cos += np.abs(dot_cos)
+            print("Sum of cos: ", sum_of_cos)
+            if sum_of_cos < cos_eps:
+                rect_contours.append(cnt)
+    return rect_contours
+
 
 # Read image.
 img_orig = cv2.imread(image_path)
@@ -45,55 +116,17 @@ for i in range(len(contours)):
 
 cv2.drawContours(img_orig, approx, -1, (0, 255, 0), 3)
 
-# Find objects with 4 points.
-four_angles_contours = []
-for i in range(len(approx)):
-    cnt = approx[i]
-    if len(cnt) == 4:
-        four_angles_contours.append(cnt)
-
-# Find objects with right angles.
-# Let's try ret = cv2.matchShapes(cnt1,cnt2,1,0.0)
-cos_eps = 0.3
-# Loop over contours.
-rect_contours = []
-for i in range(len(four_angles_contours)):
-    rect = four_angles_contours[i]
-    # Loop over points.
-    sum_of_cos = 0
-    for j in range(4):
-        vec1 = rect[j - 1] - rect[j]
-        vec2 = rect[j] - rect[(j + 1) % 4]
-        norm1 = np.sqrt(np.sum(np.square(vec1)))
-        norm2 = np.sqrt(np.sum(np.square(vec2)))
-        print("norm1, norm2: ", norm1, norm2)
-        print("vec1, vec2: ", vec1, vec2)
-        print("np.dot(vec1, vec2): ", np.dot(vec1, vec2.transpose()))
-        dot_cos = np.dot(vec1, vec2.transpose()) / (norm1 * norm2)
-        sum_of_cos += np.abs(dot_cos)
-    print("Sum of cos: ", sum_of_cos)
-    if sum_of_cos < cos_eps:
-        rect_contours.append(rect)
+rect_contours = find_rectangles(contours)
 
 # Highlite rectangles.
 cv2.drawContours(img_orig, rect_contours, -1, (0, 0, 255), 3)
 
 # Estimate intersections of rectangles' diagonals.
 centers = []
-for i in range(len(rect_contours)):
-    x1 = rect_contours[i][0][0][0]
-    y1 = rect_contours[i][0][0][1]
-    x3 = rect_contours[i][1][0][0]
-    y3 = rect_contours[i][1][0][1]
-    x2 = rect_contours[i][2][0][0]
-    y2 = rect_contours[i][2][0][1]
-    x4 = rect_contours[i][3][0][0]
-    y4 = rect_contours[i][3][0][1]
-    Cx = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / \
-         ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4))
-    Cy = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / \
-         ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4))
-    centers.append((Cx, Cy))
+# for i in range(len(rect_contours)):
+for cnt in rect_contours:
+    centers.append(center_by_moments(cnt))
+    # centers.append(center_by_diagonals_intersection(rect_contours))
 
 d = np.sqrt(np.sum(np.square((centers[0][0] - centers[1][0], centers[0][1] - centers[1][1]))))
 
