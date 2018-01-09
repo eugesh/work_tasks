@@ -89,11 +89,10 @@ def distance_between_contours(cntA, cntB):
 def find_rectangles(simplified_contours):
     # Find objects with right angles.
     # Let's try ret = cv2.matchShapes(cnt1,cnt2,1,0.0)
-    cos_eps = 0.3
+    cos_eps = 0.4
     # Loop over contours.
     rect_contours = []
     ids = []
-    four_angles_contours = []
 
     # Firstly find objects with 4 points.
     for i in range(len(simplified_contours)):
@@ -165,7 +164,10 @@ def binarization(img):
     blur = cv2.GaussianBlur(img_gray, (25, 25), 0)
 
     # Binarize image with Otsu's threshold.
-    ret, img_bw = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    #ret, img_bw = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    #print("ret = ", ret)
+    img_bw = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\
+                                   cv2.THRESH_BINARY, 113, 1) #np.int(ret)
     return img_bw
 
 
@@ -183,13 +185,23 @@ image, contours, hierarchy = cv2.findContours(img_thresh, cv2.RETR_TREE,
                                               cv2.CHAIN_APPROX_NONE)
                                               #cv2.CHAIN_APPROX_SIMPLE)
 
+# Get rid of too small objects.
+contours_thr = []
+area_thresh = 10000
+for cnt in contours:
+    if len(cnt) > 3:
+        if cv2.contourArea(cnt) > area_thresh:
+            contours_thr.append(cnt)
+
 # cv2.drawContours(img_orig, contours, -1, (0,255,0), 3)
 
 # Contour approximation. Remove redundancy.
 approx = []
-for i in range(len(contours)):
-    epsilon = 0.1 * cv2.arcLength(contours[i], True)
-    approx.append(cv2.approxPolyDP(contours[i], epsilon, True))
+for i in range(len(contours_thr)):
+    epsilon = 0.1 * cv2.arcLength(contours_thr[i], True)
+    cnt_apprx = cv2.approxPolyDP(contours_thr[i], epsilon, True)
+    if len(cnt_apprx) > 3:
+        approx.append(cnt_apprx)
 
 cv2.drawContours(img_orig, approx, -1, (0, 255, 0), 3)
 
@@ -198,8 +210,11 @@ rect_contours, rect_ids = find_rectangles(approx)
 
 # Highlite rectangles.
 cv2.drawContours(img_orig, rect_contours, -1, (0, 0, 255), 3)
-cv2.drawContours(img_orig, contours, rect_ids[0], (255, 0, 255), 9)
-cv2.drawContours(img_orig, contours, rect_ids[1], (255, 0, 255), 9)
+# cv2.drawContours(img_orig, contours, rect_ids[0], (255, 0, 255), 9)
+# cv2.drawContours(img_orig, contours, rect_ids[1], (255, 0, 255), 9)
+
+plt.imshow(img_orig)
+plt.show()
 
 # Estimate intersections of rectangles' diagonals.
 centers = []
@@ -227,6 +242,3 @@ min_inter_dist = distance_between_contours(contours[rect_ids[0]], contours[rect_
 #     rightmost = tuple(cnt[cnt[:,:,0].argmax()][0])
 #     topmost = tuple(cnt[cnt[:,:,1].argmin()][0])
 #     bottommost = tuple(cnt[cnt[:,:,1].argmax()][0])
-
-plt.imshow(img_orig)
-plt.show()
