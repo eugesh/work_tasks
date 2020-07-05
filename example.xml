@@ -1,0 +1,55 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<features>
+	<feature>
+		<Airspace>
+			<id>1</id>
+			<type>FIR</type>
+			<name>Big Fir</name>
+			<geometry>
+				<points>
+					<lat_lon>55.234 78.456</lat_lon>
+					<lat_lon>57.345 87.2434</lat_lon>
+					<lat_lon>59.235 79.757</lat_lon>
+				</points>
+			</geometry>
+			<annotation>Some plain text</annotation>
+		</Airspace>
+	</feature>
+	<feature>
+		<Airspace>
+			<id>2</id>
+			<type>DANGER</type>
+			<name>Missile launch</name>
+			<geometry>
+				<points>
+					<lat_lon>32.234 65.77</lat_lon>
+					<lat_lon>32.534 54.355</lat_lon>
+					<lat_lon>13.23 54.4</lat_lon>
+				</points>
+			</geometry>
+		</Airspace>
+	</feature>
+	<feature>
+		<Airport>
+			<id>3</id>
+			<city>Moscow</city>
+			<arp>
+				<lat_lon>55 55</lat_lon>
+			</arp>
+			<annotation>Sheremetyevo Airport</annotation>
+		</Airport>
+	</feature>
+	<feature>
+		<Route>
+			<id>4</id>
+			<line>
+				<points>
+					<lat_lon>55 78</lat_lon>
+					<lat_lon>56 98</lat_lon>
+					<lat_lon>57 90</lat_lon>
+				</points>
+			</line>
+			<direction>BOTH</direction>
+		</Route>
+	</feature>
+</features>
