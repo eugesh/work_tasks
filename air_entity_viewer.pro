@@ -22,6 +22,7 @@ SOURCES += \
     mainwindow.cpp \
     modelloader.cpp \
     objectloaderfactory.cpp \
+    #treeitem.cpp \
     xmlobjectloder.cpp
 
 HEADERS += \
@@ -30,6 +31,7 @@ HEADERS += \
     mainwindow.h \
     modelloader.h \
     objectloaderfactory.h \
+    #treeitem.h \
     xmlobjectloder.h
 
 FORMS += \
